@@ -1,62 +1,100 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This project is for the integration of Moodle,Laravel and Keycloak using REST API. Please make sure to generate your access token in your moodle and add below in your environment:
+## Laravel Keycloak intergration with Moodle web service api
 
-## About Laravel
+1. Need to run Keycloak
+2. Need to run Xampp
+3. Need to run Laravel(php artisan serve)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+4. Need to configure 
+.env
+MOODLE_URL=http://localhost/moodle 
+MOODLE_TOKEN=moodle_mobile_app(token required from moodle api)
+MOODLE_TOKEN2=core_course_create_courses(token required from moodle api)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+KEYCLOAK_BASE_URL=http://localhost:8180/auth(your keycloak url)
+KEYCLOAK_REALM=master(your realms default= master)
+KEYCLOAK_REALM_PUBLIC_KEY= your own public key
+KEYCLOAK_CLIENT_ID= your client id name
+KEYCLOAK_CLIENT_SECRET= client secret key
+KEYCLOAK_CACHE_OPENID= cache openid default = false
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+4. Need to configure at keycloak-web.php
+<?php
 
-## Learning Laravel
+return [
+    /**
+     * Keycloak Url
+     *
+     * Generally https://your-server.com/auth
+     */
+    'base_url' => env('KEYCLOAK_BASE_URL', ''),
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+    /**
+     * Keycloak Realm
+     *
+     * Default is master
+     */
+    'realm' => env('KEYCLOAK_REALM', 'master'),// your realms default = master
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+    /**
+     * The Keycloak Server realm public key (string).
+     *
+     * @see Keycloak >> Realm Settings >> Keys >> RS256 >> Public Key
+     */
+    'realm_public_key' => env('KEYCLOAK_REALM_PUBLIC_KEY', null),
 
-## Laravel Sponsors
+    /**
+     * Keycloak Client ID
+     *
+     * @see Keycloak >> Clients >> Installation
+     */
+    'client_id' => env('KEYCLOAK_CLIENT_ID', null),
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+    /**
+     * Keycloak Client Secret
+     *
+     * @see Keycloak >> Clients >> Installation
+     */
+    'client_secret' => env('KEYCLOAK_CLIENT_SECRET', null),
 
-### Premium Partners
+    /**
+     * We can cache the OpenId Configuration
+     * The result from /realms/{realm-name}/.well-known/openid-configuration
+     *
+     * @link https://www.keycloak.org/docs/3.2/securing_apps/topics/oidc/oidc-generic.html
+     */
+    'cache_openid' => env('KEYCLOAK_CACHE_OPENID', false),
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
+    /**
+     * Page to redirect after callback if there's no "intent"
+     *
+     * @see Vizir\KeycloakWebGuard\Controllers\AuthController::callback()
+     */
+    'redirect_url' => '/home',
 
-## Contributing
+    /**
+     * The routes for authenticate
+     *
+     * Accept a string as the first parameter of route() or false to disable the route.
+     *
+     * The routes will receive the name "keycloak.{route}" and login/callback are required.
+     * So, if you make it false, you shoul register a named 'keycloak.login' route and extend
+     * the Vizir\KeycloakWebGuard\Controllers\AuthController controller.
+     */
+    'routes' => [
+        'login' => 'login',
+        'logout' => 'logout',
+        'register' => 'register',
+        'callback' => 'callback',
+    ],
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+    /**
+    * GuzzleHttp Client options
+    *
+    * @link http://docs.guzzlephp.org/en/stable/request-options.html
+    */
+   'guzzle_options' => [],
+];
 
-## Code of Conduct
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
